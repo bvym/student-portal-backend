@@ -20,6 +20,12 @@ import java.io.File
 import java.io.FileInputStream
 import org.mindrot.jbcrypt.BCrypt
 
+@Serializable
+data class ChangePasswordResponse(
+    val success: Boolean,
+    val message: String
+)
+
 // Data classes
 @Serializable
 data class LoginRequest(
@@ -246,9 +252,9 @@ fun main() {
 
                 // Validate new password
                 if (request.newPassword.length < 6) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf(
-                        "success" to false,
-                        "message" to "Password must be at least 6 characters"
+                    call.respond(HttpStatusCode.BadRequest, ChangePasswordResponse(
+                        success = false,
+                        message = "Password must be at least 6 characters"
                     ))
                     return@post
                 }
@@ -268,9 +274,9 @@ fun main() {
                 }
 
                 if (!oldPasswordValid) {
-                    call.respond(HttpStatusCode.Unauthorized, mapOf(
-                        "success" to false,
-                        "message" to "Current password is incorrect"
+                    call.respond(HttpStatusCode.Unauthorized, ChangePasswordResponse(
+                        success = false,
+                        message = "Current password is incorrect"
                     ))
                     return@post
                 }
@@ -278,9 +284,9 @@ fun main() {
                 // Save new password
                 userStorage.saveNewPassword(username, request.newPassword)
 
-                call.respond(HttpStatusCode.OK, mapOf(
-                    "success" to true,
-                    "message" to "Password changed successfully"
+                call.respond(HttpStatusCode.OK, ChangePasswordResponse(
+                    success = true,
+                    message = "Password changed successfully"
                 ))
             }
 
@@ -290,9 +296,9 @@ fun main() {
                 val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
 
                 if (adminKey != correctKey) {
-                    call.respond(HttpStatusCode.Forbidden, mapOf(
-                        "success" to false,
-                        "message" to "Invalid admin key"
+                    call.respond(HttpStatusCode.Forbidden, ChangePasswordResponse(
+                        success = false,
+                        message = "Invalid admin key"
                     ))
                     return@post
                 }
@@ -306,9 +312,9 @@ fun main() {
                 // Remove from users.json - they'll use temp password again
                 userStorage.removeUser(username)
 
-                call.respond(HttpStatusCode.OK, mapOf(
-                    "success" to true,
-                    "message" to "Password reset. Student must use temp password from sheet."
+                call.respond(HttpStatusCode.OK, ChangePasswordResponse(
+                    success = true,
+                    message = "Password reset. Student must use temp password from sheet."
                 ))
             }
         }
