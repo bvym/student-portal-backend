@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Reset Password</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 { color: #e94560; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #aaa; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ddd;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #0f3460;
+            color: #eee;
+            transition: border-color 0.3s;
+        }
+        input:focus { outline: none; border-color: #e94560; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #d63651; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .error {
+            background: #3d1319;
+            color: #ff6b6b;
+            border-left: 4px solid #ff6b6b;
+        }
+        .success {
+            background: #1a3d2e;
+            color: #51cf66;
+            border-left: 4px solid #51cf66;
+        }
+        .hidden { display: none; }
+        .warning {
+            background: #3d2f19;
+            color: #ffd93d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            border-left: 4px solid #ffd93d;
+        }
+        .info {
+            background: #0f3460;
+            color: #aaa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            font-size: 13px;
+            border-top: 1px solid #1a4d7a;
+        }
+        .info strong { color: #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Admin Password Reset</h1>
+        <p class="subtitle">Reset a student's password to their temp password</p>
+        
+        <div class="warning">
+            ⚠️ This will delete their custom password. They'll have to use their temp password from column Q in the Google Sheet.
+        </div>
+        
+        <div id="message" class="message hidden"></div>
+        
+        <form id="resetForm">
+            <div class="form-group">
+                <label for="adminKey">Admin Key</label>
+                <input type="password" id="adminKey" required placeholder="Enter your admin key">
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Student Username</label>
+                <input type="text" id="username" required placeholder="e.g., jsmith">
+            </div>
+            
+            <button type="submit" id="resetBtn">Reset Password</button>
+        </form>
+        
+        <div class="info">
+            <p><strong>Instructions:</strong></p>
+            <p style="margin-top: 8px;">1. Enter your admin key (set in Render)</p>
+            <p>2. Enter the student's username</p>
+            <p>3. After reset, student logs in with their temp password from the Google Sheet (column Q)</p>
+            <p style="margin-top: 12px;"><strong>Student Portal:</strong> https://bvym.github.io/student-portal-backend/</p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://points-tracker-wpy6.onrender.com';
+        
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const adminKey = document.getElementById('adminKey').value;
+            const username = document.getElementById('username').value.trim().toLowerCase();
+            const messageDiv = document.getElementById('message');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            messageDiv.classList.add('hidden');
+            resetBtn.disabled = true;
+            resetBtn.textContent = 'Resetting...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': adminKey
+                    },
+                    body: JSON.stringify({ username })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.textContent = `✅ Success! ${username}'s password has been reset. They must use their temp password from the sheet.`;
+                    messageDiv.className = 'message success';
+                    document.getElementById('username').value = '';
+                } else {
+                    messageDiv.textContent = `❌ Error: ${data.message || 'Failed to reset password'}`;
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = `❌ Network error: ${error.message}`;
+                messageDiv.className = 'message error';
+            } finally {
+                messageDiv.classList.remove('hidden');
+                resetBtn.disabled = false;
+                resetBtn.textContent = 'Reset Password';
+            }
+        });
+    </script>
+</body>
+</html>
