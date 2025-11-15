@@ -168,8 +168,10 @@ fun main() {
         install(CORS) {
             anyHost()
             allowHeader(HttpHeaders.ContentType)
+            allowHeader("X-Admin-Key")  // Allow custom admin header
             allowMethod(HttpMethod.Post)
             allowMethod(HttpMethod.Get)
+            allowMethod(HttpMethod.Options)  // Allow preflight requests
         }
 
         routing {
