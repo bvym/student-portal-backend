@@ -252,15 +252,20 @@
 
             const data = await response.json();
 
+            console.log('Login response:', data); // DEBUG
+            console.log('mustChangePassword:', data.mustChangePassword); // DEBUG
+
             if (data.success) {
                 // Store data and redirect
                 sessionStorage.setItem('username', username);
                 sessionStorage.setItem('studentData', JSON.stringify(data.studentData));
 
                 if (data.mustChangePassword === true) {
+                    console.log('Redirecting to change password'); // DEBUG
                     sessionStorage.setItem('tempPassword', password);
                     window.location.href = 'change-password.html';
                 } else {
+                    console.log('Redirecting to dashboard'); // DEBUG
                     window.location.href = 'dashboard.html';
                 }
             } else {
@@ -277,4 +282,4 @@
     });
 </script>
 </body>
-</html>
+</html>git rm admin-view-students.html
