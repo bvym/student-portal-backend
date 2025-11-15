@@ -1,0 +1,20 @@
+﻿# Build files
+build/
+.gradle/
+*.jar
+*.class
+out/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# CRITICAL: Never commit credentials
+points-portal-478302-cd5cd63d4fc1.json
+users.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
