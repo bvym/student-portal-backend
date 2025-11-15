@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Reset Password</title>
+    <title>Admin Panel - Junior Class Leadership</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -11,22 +11,52 @@
             background: #1a1a2e;
             color: #eee;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
             background: #16213e;
             border-radius: 12px;
             padding: 40px;
-            max-width: 500px;
-            width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
-        h1 { color: #e94560; margin-bottom: 10px; font-size: 24px; }
+        h1 { color: #e94560; margin-bottom: 10px; font-size: 28px; }
         .subtitle { color: #aaa; margin-bottom: 30px; font-size: 14px; }
-        .form-group { margin-bottom: 20px; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #0f3460;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            color: #aaa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab:hover { color: #e94560; }
+        .tab.active {
+            color: #e94560;
+            border-bottom-color: #e94560;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .admin-auth {
+            background: #0f3460;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .form-group { margin-bottom: 15px; }
         label {
             display: block;
             margin-bottom: 8px;
@@ -34,7 +64,7 @@
             font-weight: 500;
             font-size: 14px;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #0f3460;
@@ -42,12 +72,10 @@
             font-size: 15px;
             background: #0f3460;
             color: #eee;
-            transition: border-color 0.3s;
         }
-        input:focus { outline: none; border-color: #e94560; }
+        input:focus, select:focus { outline: none; border-color: #e94560; }
         button {
-            width: 100%;
-            padding: 14px;
+            padding: 12px 24px;
             background: #e94560;
             color: white;
             border: none;
@@ -59,6 +87,7 @@
         }
         button:hover { background: #d63651; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
+
         .message {
             padding: 12px;
             border-radius: 8px;
@@ -75,106 +104,318 @@
             color: #51cf66;
             border-left: 4px solid #51cf66;
         }
-        .hidden { display: none; }
         .warning {
             background: #3d2f19;
             color: #ffd93d;
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 13px;
             border-left: 4px solid #ffd93d;
         }
-        .info {
-            background: #0f3460;
-            color: #aaa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 30px;
-            font-size: 13px;
-            border-top: 1px solid #1a4d7a;
+        .hidden { display: none; }
+
+        .dashboard {
+            display: none;
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 20px;
         }
-        .info strong { color: #eee; }
+        .dashboard.active { display: block; }
+        .welcome {
+            background: linear-gradient(135deg, #003366 0%, #0059b3 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        .data-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid #003366;
+        }
+        .data-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .data-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .total-points {
+            background: linear-gradient(135deg, #003366 0%, #0059b3 100%);
+            color: white;
+            border: none;
+        }
+        .total-points .data-label { color: rgba(255,255,255,0.9); }
+        .total-points .data-value { color: white; font-size: 32px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 Admin Password Reset</h1>
-        <p class="subtitle">Reset a student's password to their temp password</p>
-        
-        <div class="warning">
-            ⚠️ This will delete their custom password. They'll have to use their temp password from column Q in the Google Sheet.
+<div class="container">
+    <h1>🔐 Admin Panel</h1>
+    <p class="subtitle">Manage student passwords and view dashboards</p>
+
+    <div id="authSection" class="admin-auth">
+        <div id="authError" class="message error hidden"></div>
+
+        <div class="form-group">
+            <label for="adminKey">Admin Key</label>
+            <input type="password" id="adminKey" placeholder="Enter your admin key">
         </div>
-        
-        <div id="message" class="message hidden"></div>
-        
-        <form id="resetForm">
+        <button onclick="authenticate()">Authenticate</button>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('view')">View Students</button>
+            <button class="tab" onclick="switchTab('reset')">Reset Password</button>
+        </div>
+
+        <!-- View Students Tab -->
+        <div id="viewTab" class="tab-content active">
             <div class="form-group">
-                <label for="adminKey">Admin Key</label>
-                <input type="password" id="adminKey" required placeholder="Enter your admin key">
+                <label for="studentSelect">Select Student</label>
+                <select id="studentSelect" onchange="loadStudentData()">
+                    <option value="">-- Choose a student --</option>
+                </select>
             </div>
-            
-            <div class="form-group">
-                <label for="username">Student Username</label>
-                <input type="text" id="username" required placeholder="e.g., jsmith">
+
+            <div id="dashboard" class="dashboard">
+                <div class="welcome">
+                    <h2 id="welcomeName">Student Dashboard</h2>
+                    <p>Semester 1 Summary</p>
+                </div>
+
+                <div class="data-grid" id="dataGrid"></div>
             </div>
-            
-            <button type="submit" id="resetBtn">Reset Password</button>
-        </form>
-        
-        <div class="info">
-            <p><strong>Instructions:</strong></p>
-            <p style="margin-top: 8px;">1. Enter your admin key (set in Render)</p>
-            <p>2. Enter the student's username</p>
-            <p>3. After reset, student logs in with their temp password from the Google Sheet (column Q)</p>
-            <p style="margin-top: 12px;"><strong>Student Portal:</strong> https://bvym.github.io/student-portal-backend/</p>
+        </div>
+
+        <!-- Reset Password Tab -->
+        <div id="resetTab" class="tab-content">
+            <div class="warning">
+                ⚠️ This will delete their custom password. They'll have to use their temp password from column Q in the Google Sheet.
+            </div>
+
+            <div id="resetMessage" class="message hidden"></div>
+
+            <form id="resetForm" onsubmit="resetPassword(event)">
+                <div class="form-group">
+                    <label for="resetUsername">Student Username</label>
+                    <input type="text" id="resetUsername" required placeholder="e.g., jsmith">
+                </div>
+
+                <button type="submit" id="resetBtn">Reset Password</button>
+            </form>
         </div>
     </div>
-    
-    <script>
-        const API_URL = 'https://points-tracker-wpy6.onrender.com';
-        
-        document.getElementById('resetForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const adminKey = document.getElementById('adminKey').value;
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            const messageDiv = document.getElementById('message');
-            const resetBtn = document.getElementById('resetBtn');
-            
-            messageDiv.classList.add('hidden');
-            resetBtn.disabled = true;
-            resetBtn.textContent = 'Resetting...';
-            
-            try {
-                const response = await fetch(`${API_URL}/api/admin/reset-password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Key': adminKey
-                    },
-                    body: JSON.stringify({ username })
-                });
-                
+</div>
+
+<script>
+    const API_URL = 'https://points-tracker-wpy6.onrender.com';
+    let adminKey = '';
+    let allStudents = [];
+
+    function switchTab(tab) {
+        // Update tab buttons
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tab + 'Tab').classList.add('active');
+    }
+
+    async function authenticate() {
+        const key = document.getElementById('adminKey').value;
+        const errorDiv = document.getElementById('authError');
+
+        errorDiv.classList.add('hidden');
+
+        if (!key) {
+            errorDiv.textContent = 'Please enter admin key';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/admin/list-students`, {
+                method: 'GET',
+                headers: { 'X-Admin-Key': key }
+            });
+
+            if (response.ok) {
                 const data = await response.json();
-                
-                if (response.ok) {
-                    messageDiv.textContent = `✅ Success! ${username}'s password has been reset. They must use their temp password from the sheet.`;
-                    messageDiv.className = 'message success';
-                    document.getElementById('username').value = '';
-                } else {
-                    messageDiv.textContent = `❌ Error: ${data.message || 'Failed to reset password'}`;
-                    messageDiv.className = 'message error';
-                }
-            } catch (error) {
-                messageDiv.textContent = `❌ Network error: ${error.message}`;
-                messageDiv.className = 'message error';
-            } finally {
-                messageDiv.classList.remove('hidden');
-                resetBtn.disabled = false;
-                resetBtn.textContent = 'Reset Password';
+                adminKey = key;
+                allStudents = data.students;
+
+                // Populate dropdown
+                const select = document.getElementById('studentSelect');
+                allStudents.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.username;
+                    option.textContent = `${student.name} (${student.username})`;
+                    select.appendChild(option);
+                });
+
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+            } else {
+                errorDiv.textContent = 'Invalid admin key';
+                errorDiv.classList.remove('hidden');
             }
-        });
-    </script>
+        } catch (error) {
+            errorDiv.textContent = 'Network error: ' + error.message;
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    async function loadStudentData() {
+        const username = document.getElementById('studentSelect').value;
+        if (!username) {
+            document.getElementById('dashboard').classList.remove('active');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/admin/view-student`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Key': adminKey
+                },
+                body: JSON.stringify({ username })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showDashboard(data.studentData);
+            } else {
+                alert('Failed to load student data');
+            }
+        } catch (error) {
+            alert('Error loading student: ' + error.message);
+        }
+    }
+
+    function showDashboard(data) {
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('welcomeName').textContent = `${data.name}'s Dashboard`;
+
+        const grid = document.getElementById('dataGrid');
+        grid.innerHTML = `
+            <div class="data-card">
+                <div class="data-label">Cookie Decorating</div>
+                <div class="data-value">${data.cookieDecorating ? data.cookieDecorating + ' hrs' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Haunted Basement</div>
+                <div class="data-value">${data.hauntedBasement ? data.hauntedBasement + ' hrs' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Club Fair</div>
+                <div class="data-value">${data.clubFair ? data.clubFair + ' hrs' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Open House</div>
+                <div class="data-value">${data.openHouse ? data.openHouse + ' hrs' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Mental Health Oct 8</div>
+                <div class="data-value">${data.mentalHealthOct8 || '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Mental Health Nov 14</div>
+                <div class="data-value">${data.mentalHealthNov14 || '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Fall Play</div>
+                <div class="data-value">${data.fallPlay ? data.fallPlay + ' hrs' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Spirit Week</div>
+                <div class="data-value">${data.spiritWeek ? data.spiritWeek + ' days' : '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Sept COSA</div>
+                <div class="data-value">${data.septCosa || '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Oct COSA</div>
+                <div class="data-value">${data.octCosa || '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Nov COSA</div>
+                <div class="data-value">${data.novCosa || '—'}</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Dec COSA</div>
+                <div class="data-value">${data.decCosa || '—'}</div>
+            </div>
+            <div class="data-card total-points">
+                <div class="data-label">Total Points</div>
+                <div class="data-value">${data.totalPoints || '0'}</div>
+            </div>
+            <div class="data-card total-points">
+                <div class="data-label">Completion</div>
+                <div class="data-value">${data.percentOutOf90 || '0%'}</div>
+            </div>
+        `;
+    }
+
+    async function resetPassword(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('resetUsername').value.trim().toLowerCase();
+        const messageDiv = document.getElementById('resetMessage');
+        const resetBtn = document.getElementById('resetBtn');
+
+        messageDiv.classList.add('hidden');
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Resetting...';
+
+        try {
+            const response = await fetch(`${API_URL}/api/admin/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Key': adminKey
+                },
+                body: JSON.stringify({ username })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.textContent = `✅ Success! ${username}'s password has been reset. They must use their temp password from the sheet.`;
+                messageDiv.className = 'message success';
+                document.getElementById('resetUsername').value = '';
+            } else {
+                messageDiv.textContent = `❌ Error: ${data.message || 'Failed to reset password'}`;
+                messageDiv.className = 'message error';
+            }
+        } catch (error) {
+            messageDiv.textContent = `❌ Network error: ${error.message}`;
+            messageDiv.className = 'message error';
+        } finally {
+            messageDiv.classList.remove('hidden');
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'Reset Password';
+        }
+    }
+</script>
 </body>
 </html>

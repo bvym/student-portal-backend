@@ -256,9 +256,8 @@
                 // Store data and redirect
                 sessionStorage.setItem('username', username);
                 sessionStorage.setItem('studentData', JSON.stringify(data.studentData));
-                sessionStorage.setItem('mustChangePassword', data.mustChangePassword);
 
-                if (data.mustChangePassword) {
+                if (data.mustChangePassword === true) {
                     sessionStorage.setItem('tempPassword', password);
                     window.location.href = 'change-password.html';
                 } else {
