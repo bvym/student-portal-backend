@@ -133,8 +133,15 @@ val httpClient = HttpClient(CIO) {
 
 // Get OAuth token from service account
 fun getAccessToken(): String {
+    // Try Render's secret file location first, then local file
+    val credentialsPath = if (File("/etc/secrets/points-portal-478302-cd5cd63d4fc1.json").exists()) {
+        "/etc/secrets/points-portal-478302-cd5cd63d4fc1.json"
+    } else {
+        "points-portal-478302-cd5cd63d4fc1.json"
+    }
+
     val credentials = GoogleCredentials.fromStream(
-        FileInputStream("points-portal-478302-cd5cd63d4fc1.json")
+        FileInputStream(credentialsPath)
     ).createScoped(listOf("https://www.googleapis.com/auth/spreadsheets.readonly"))
 
     credentials.refreshIfExpired()
