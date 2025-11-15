@@ -319,6 +319,54 @@ fun main() {
                     message = "Password reset. Student must use temp password from sheet."
                 ))
             }
+
+            // ADMIN: List all students
+            get("/api/admin/list-students") {
+                val adminKey = call.request.headers["X-Admin-Key"]
+                val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
+
+                if (adminKey != correctKey) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Invalid admin key"))
+                    return@get
+                }
+
+                // Fetch all students from Google Sheets
+                val allStudents = getAllStudentsFromSheets()
+                call.respond(HttpStatusCode.OK, mapOf("students" to allStudents))
+            }
+
+            // ADMIN: View any student's data
+            post("/api/admin/view-student") {
+                val adminKey = call.request.headers["X-Admin-Key"]
+                val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
+
+                if (adminKey != correctKey) {
+                    call.respond(HttpStatusCode.Forbidden, LoginResponse(
+                        success = false,
+                        message = "Invalid admin key"
+                    ))
+                    return@post
+                }
+
+                @Serializable
+                data class ViewStudentRequest(val username: String)
+
+                val request = call.receive<ViewStudentRequest>()
+                val studentData = getStudentDataFromSheets(request.username)
+
+                if (studentData == null) {
+                    call.respond(HttpStatusCode.NotFound, LoginResponse(
+                        success = false,
+                        message = "Student not found"
+                    ))
+                    return@post
+                }
+
+                call.respond(HttpStatusCode.OK, LoginResponse(
+                    success = true,
+                    studentData = studentData
+                ))
+            }
         }
     }.start(wait = true)
 }
@@ -327,6 +375,37 @@ fun main() {
 suspend fun getStudentDataFromSheets(username: String): StudentData? {
     val row = getStudentRowFromSheets(username)
     return row?.get("data") as? StudentData
+}
+
+// Get all students (for admin dropdown)
+suspend fun getAllStudentsFromSheets(): List<Map<String, String>> {
+    try {
+        val token = getAccessToken()
+        val spreadsheetId = "15TB4GGs4y_8-_nkKvAJTs_s1lAmSpHjodYnnuiDrVhs"
+        val range = "'Semester 1'!A:B"  // Just names and usernames
+
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/${range.replace(" ", "%20")}"
+
+        val response: HttpResponse = httpClient.get(url) {
+            header("Authorization", "Bearer $token")
+        }
+
+        val sheetsResponse = Json.decodeFromString<SheetsResponse>(response.bodyAsText())
+        val values = sheetsResponse.values ?: return emptyList()
+
+        // Skip header row, return all students
+        return values.drop(1).mapNotNull { row ->
+            if (row.size >= 2) {
+                mapOf(
+                    "name" to row[0],
+                    "username" to row[1]
+                )
+            } else null
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return emptyList()
+    }
 }
 
 // Get full student row including temp password via HTTP
