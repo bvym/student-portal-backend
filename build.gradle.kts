@@ -41,6 +41,15 @@ application {
     mainClass.set("MainKt")
 }
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "MainKt"
+    }
+    // Include dependencies in JAR
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+}
+
 kotlin {
     jvmToolchain(17)
 }
