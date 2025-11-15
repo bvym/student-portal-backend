@@ -35,6 +35,10 @@ dependencies {
 
     // Google OAuth (just for reading the credentials file)
     implementation("com.google.auth:google-auth-library-oauth2-http:1.20.0")
+
+    // PostgreSQL driver for Supabase
+    implementation("org.postgresql:postgresql:42.7.1")
+    implementation("com.zaxxer:HikariCP:5.1.0")
 }
 
 application {

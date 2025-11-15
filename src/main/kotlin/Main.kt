@@ -19,6 +19,9 @@ import com.google.auth.oauth2.GoogleCredentials
 import java.io.File
 import java.io.FileInputStream
 import org.mindrot.jbcrypt.BCrypt
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import java.sql.Connection
 
 @Serializable
 data class ChangePasswordResponse(

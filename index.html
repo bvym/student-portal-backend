@@ -3,65 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Points Portal</title>
+    <link rel="icon" href="./logo.png" type="image/x-icon">
+    <title>Junior Class Leadership - Member Points</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #003366 0%, #0059b3 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 450px;
-            width: 100%;
-        }
-        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
-        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
-        .form-group { margin-bottom: 20px; }
-        label {
-            display: block;
-            margin-bottom: 8px;
             color: #333;
-            font-weight: 500;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #logo-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+
+        .logo-text h1 {
+            color: #003366;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #666;
             font-size: 14px;
         }
+
+        hr {
+            border: none;
+            border-top: 3px solid #FFD700;
+            margin: 0;
+        }
+
+        .page-title {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .page-title h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .page-title p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .login-card h3 {
+            color: #003366;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .login-card .subtitle {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #003366;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
         input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 15px;
+            font-family: 'Nunito', sans-serif;
             transition: border-color 0.3s;
         }
+
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #003366;
         }
+
         button {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #003366;
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Nunito', sans-serif;
+            transition: background 0.3s, transform 0.2s;
         }
+
         button:hover {
+            background: #00509e;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
         }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .error {
             background: #fee;
             color: #c33;
@@ -71,299 +168,114 @@
             font-size: 14px;
             border-left: 4px solid #c33;
         }
-        .dashboard { display: none; }
-        .dashboard.active { display: block; }
-        .welcome {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        .hidden {
+            display: none;
+        }
+
+        footer {
+            text-align: center;
             color: white;
             padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-        .welcome h2 { font-size: 24px; margin-bottom: 5px; }
-        .welcome p { opacity: 0.9; font-size: 14px; }
-        .data-grid { display: grid; gap: 16px; }
-        .data-card {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-        .data-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-        .data-value {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-        }
-        .total-points {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            margin-top: 20px;
-        }
-        .total-points .data-label { color: rgba(255,255,255,0.9); }
-        .total-points .data-value { color: white; font-size: 32px; }
-        .logout-btn {
-            background: #e0e0e0;
-            color: #333;
-            margin-top: 20px;
-            padding: 10px;
             font-size: 14px;
+            opacity: 0.8;
         }
-        .logout-btn:hover { background: #d0d0d0; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Login Form -->
-        <div id="loginForm" class="login">
-            <h1>Student Points Portal</h1>
-            <p class="subtitle">Sign in to view your points and activities</p>
-            
-            <div id="errorMessage" class="error hidden"></div>
-            
-            <form id="loginFormElement">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" required autocomplete="username">
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" required autocomplete="current-password">
-                </div>
-                
-                <button type="submit" id="loginBtn">Sign In</button>
-            </form>
-        </div>
-        
-        <!-- Change Password Form -->
-        <div id="changePasswordForm" class="hidden">
-            <h1>⚠️ Change Your Password</h1>
-            <p class="subtitle">You must change your temporary password before continuing</p>
-            
-            <div id="changeErrorMessage" class="error hidden"></div>
-            
-            <form id="changePasswordFormElement">
-                <input type="hidden" id="changeUsername">
-                
-                <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="newPassword">New Password (min 6 characters)</label>
-                    <input type="password" id="newPassword" required minlength="6">
-                </div>
-                
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" required minlength="6">
-                </div>
-                
-                <button type="submit" id="changeBtn">Change Password</button>
-            </form>
-        </div>
-        
-        <!-- Dashboard -->
-        <div id="dashboard" class="dashboard">
-            <div class="welcome">
-                <h2 id="welcomeName">Welcome!</h2>
-                <p>Here's your activity summary for Semester 1</p>
+<header>
+    <div class="header-container">
+        <div class="logo-section">
+            <img id="logo-image" src="logo.png" alt="Junior Class Council Logo">
+            <div class="logo-text">
+                <h1>Junior Class Leadership</h1>
+                <p>Brooklyn Technical High School</p>
             </div>
-            
-            <div class="data-grid" id="dataGrid"></div>
-            
-            <button class="logout-btn" onclick="logout()">Sign Out</button>
         </div>
     </div>
-    
-    <script>
-        const API_URL = 'https://points-tracker-wpy6.onrender.com';
-        let currentUser = null;
-        let currentData = null;
-        
-        document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            errorDiv.classList.add('hidden');
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Signing in...';
-            
-            try {
-                const response = await fetch(`${API_URL}/api/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentUser = username;
-                    currentData = data.studentData;
-                    
-                    if (data.mustChangePassword) {
-                        document.getElementById('loginForm').classList.add('hidden');
-                        document.getElementById('changePasswordForm').classList.remove('hidden');
-                        document.getElementById('changeUsername').value = username;
-                        document.getElementById('currentPassword').value = password;
-                    } else {
-                        showDashboard(data.studentData);
-                    }
+    <hr>
+</header>
+
+<div class="page-title">
+    <h2>Member Points Portal</h2>
+    <p>Enter your username and password to view your points</p>
+</div>
+
+<main>
+    <div class="login-card">
+        <h3>Sign In</h3>
+        <p class="subtitle">Access your activity points and hours</p>
+
+        <div id="errorMessage" class="error hidden"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter your username" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" id="loginBtn">Sign In</button>
+        </form>
+    </div>
+</main>
+
+<footer>
+    <p>BTHS Junior Class Leadership | Member Points Portal</p>
+</footer>
+
+<script>
+    const API_URL = 'https://points-tracker-wpy6.onrender.com';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+
+        errorDiv.classList.add('hidden');
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+
+        try {
+            const response = await fetch(`${API_URL}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Store data and redirect
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('studentData', JSON.stringify(data.studentData));
+                sessionStorage.setItem('mustChangePassword', data.mustChangePassword);
+
+                if (data.mustChangePassword) {
+                    sessionStorage.setItem('tempPassword', password);
+                    window.location.href = 'change-password.html';
                 } else {
-                    errorDiv.textContent = data.message || 'Login failed';
-                    errorDiv.classList.remove('hidden');
+                    window.location.href = 'dashboard.html';
                 }
-            } catch (error) {
-                errorDiv.textContent = 'Network error. Please try again.';
+            } else {
+                errorDiv.textContent = data.message || 'Login failed';
                 errorDiv.classList.remove('hidden');
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
             }
-        });
-        
-        document.getElementById('changePasswordFormElement').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('changeUsername').value;
-            const oldPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorDiv = document.getElementById('changeErrorMessage');
-            const changeBtn = document.getElementById('changeBtn');
-            
-            errorDiv.classList.add('hidden');
-            
-            if (newPassword !== confirmPassword) {
-                errorDiv.textContent = 'New passwords do not match';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-            
-            if (newPassword.length < 6) {
-                errorDiv.textContent = 'Password must be at least 6 characters';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-            
-            changeBtn.disabled = true;
-            changeBtn.textContent = 'Changing...';
-            
-            try {
-                const response = await fetch(`${API_URL}/api/change-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, oldPassword, newPassword })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('changePasswordForm').classList.add('hidden');
-                    showDashboard(currentData);
-                } else {
-                    errorDiv.textContent = data.message || 'Failed to change password';
-                    errorDiv.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorDiv.textContent = 'Network error. Please try again.';
-                errorDiv.classList.remove('hidden');
-            } finally {
-                changeBtn.disabled = false;
-                changeBtn.textContent = 'Change Password';
-            }
-        });
-        
-        function showDashboard(data) {
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('changePasswordForm').classList.add('hidden');
-            document.getElementById('dashboard').classList.add('active');
-            
-            document.getElementById('welcomeName').textContent = `Welcome, ${data.name}!`;
-            
-            const grid = document.getElementById('dataGrid');
-            grid.innerHTML = `
-                <div class="data-card">
-                    <div class="data-label">Cookie Decorating</div>
-                    <div class="data-value">${data.cookieDecorating} hrs</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Haunted Basement</div>
-                    <div class="data-value">${data.hauntedBasement} hrs</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Club Fair</div>
-                    <div class="data-value">${data.clubFair} hrs</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Open House</div>
-                    <div class="data-value">${data.openHouse} hrs</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Mental Health Oct 8</div>
-                    <div class="data-value">${data.mentalHealthOct8}</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Mental Health Nov 14</div>
-                    <div class="data-value">${data.mentalHealthNov14}</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Fall Play</div>
-                    <div class="data-value">${data.fallPlay} hrs</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Spirit Week</div>
-                    <div class="data-value">${data.spiritWeek} days</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Sept COSA</div>
-                    <div class="data-value">${data.septCosa}</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Oct COSA</div>
-                    <div class="data-value">${data.octCosa}</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Nov COSA</div>
-                    <div class="data-value">${data.novCosa}</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">Dec COSA</div>
-                    <div class="data-value">${data.decCosa}</div>
-                </div>
-                <div class="data-card total-points">
-                    <div class="data-label">Total Points</div>
-                    <div class="data-value">${data.totalPoints}</div>
-                </div>
-                <div class="data-card total-points">
-                    <div class="data-label">Completion</div>
-                    <div class="data-value">${data.percentOutOf90}</div>
-                </div>
-            `;
+        } catch (error) {
+            errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.classList.remove('hidden');
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
         }
-        
-        function logout() {
-            currentUser = null;
-            currentData = null;
-            document.getElementById('dashboard').classList.remove('active');
-            document.getElementById('loginForm').classList.remove('hidden');
-            document.getElementById('loginFormElement').reset();
-        }
-    </script>
+    });
+</script>
 </body>
 </html>
