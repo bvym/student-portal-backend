@@ -156,8 +156,10 @@ fun getAccessToken(): String {
     credentials.refreshIfExpired()
     return credentials.accessToken.tokenValue
 }
-
 fun main() {
+    // Initialize database connection
+    Database.init()
+
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         install(ContentNegotiation) {
             json(Json {
