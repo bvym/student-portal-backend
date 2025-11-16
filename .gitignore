@@ -9,8 +9,10 @@ out/
 .idea/
 *.iml
 .vscode/
+*.swp
+*.swo
 
-# CRITICAL: Never commit credentials
+# CRITICAL: Never commit these files
 points-portal-478302-cd5cd63d4fc1.json
 users.json
 
@@ -18,3 +20,6 @@ users.json
 .DS_Store
 Thumbs.db
 *.log
+
+# Gradle wrapper (keep these)
+!gradle-wrapper.jar

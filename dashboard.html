@@ -8,11 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;600;700&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Nunito', sans-serif;
@@ -221,9 +217,7 @@
             <th style="text-align: right;">Points/Hours</th>
         </tr>
         </thead>
-        <tbody id="activitiesTable">
-        <!-- Populated by JavaScript -->
-        </tbody>
+        <tbody id="activitiesTable"></tbody>
     </table>
 </div>
 
@@ -232,6 +226,8 @@
 </footer>
 
 <script>
+    console.log('📊 Dashboard Loaded - Version 3.0');
+
     const studentData = JSON.parse(sessionStorage.getItem('studentData'));
 
     if (!studentData) {
@@ -239,12 +235,10 @@
         window.location.href = 'index.html';
     }
 
-    // Display student name
     document.getElementById("userName").textContent = studentData.name;
     document.getElementById("totalPoints").textContent = studentData.totalPoints || '0';
     document.getElementById("completion").textContent = studentData.percentOutOf90 || '0%';
 
-    // Build activities table
     const activities = [
         { name: 'Cookie Decorating', value: studentData.cookieDecorating, unit: 'hrs' },
         { name: 'Haunted Basement', value: studentData.hauntedBasement, unit: 'hrs' },
@@ -270,7 +264,7 @@
         valueCell.style.textAlign = 'right';
         valueCell.className = 'points-value';
 
-        if (activity.value && activity.value !== '0') {
+        if (activity.value && activity.value !== '0' && activity.value !== '') {
             valueCell.textContent = activity.unit ? `${activity.value} ${activity.unit}` : activity.value;
         } else {
             valueCell.textContent = '—';

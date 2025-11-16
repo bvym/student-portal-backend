@@ -166,7 +166,7 @@
 <body>
 <div class="container">
     <h1>🔐 Admin Panel</h1>
-    <p class="subtitle">Manage student passwords and view dashboards</p>
+    <p class="subtitle">Manage student passwords and view dashboards - Version 3.0</p>
 
     <div id="authSection" class="admin-auth">
         <div id="authError" class="message error hidden"></div>
@@ -180,8 +180,8 @@
 
     <div id="adminPanel" class="hidden">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('view')">View Students</button>
-            <button class="tab" onclick="switchTab('reset')">Reset Password</button>
+            <button class="tab active" onclick="switchTab(event, 'view')">View Students</button>
+            <button class="tab" onclick="switchTab(event, 'reset')">Reset Password</button>
         </div>
 
         <!-- View Students Tab -->
@@ -224,16 +224,15 @@
 </div>
 
 <script>
+    console.log('🔐 Admin Panel Loaded - Version 3.0');
     const API_URL = 'https://points-tracker-wpy6.onrender.com';
     let adminKey = '';
     let allStudents = [];
 
-    function switchTab(tab) {
-        // Update tab buttons
+    function switchTab(event, tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         event.target.classList.add('active');
 
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById(tab + 'Tab').classList.add('active');
     }
@@ -261,7 +260,6 @@
                 adminKey = key;
                 allStudents = data.students;
 
-                // Populate dropdown
                 const select = document.getElementById('studentSelect');
                 allStudents.forEach(student => {
                     const option = document.createElement('option');

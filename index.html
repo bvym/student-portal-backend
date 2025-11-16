@@ -8,11 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;600;700&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Nunito', sans-serif;
@@ -107,9 +103,7 @@
             margin-bottom: 30px;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+        .form-group { margin-bottom: 20px; }
 
         label {
             display: block;
@@ -169,9 +163,7 @@
             border-left: 4px solid #c33;
         }
 
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
 
         footer {
             text-align: center;
@@ -229,24 +221,27 @@
 </footer>
 
 <script>
-    console.log('SCRIPT VERSION 2.0 LOADED'); // Version tracking
+    console.log('🚀 Login Page Loaded - Version 3.0');
     const API_URL = 'https://points-tracker-wpy6.onrender.com';
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        console.log('LOGIN FORM SUBMITTED!'); // DEBUG
+        console.log('📝 Form submitted');
 
         const username = document.getElementById('username').value.trim().toLowerCase();
         const password = document.getElementById('password').value;
         const errorDiv = document.getElementById('errorMessage');
         const loginBtn = document.getElementById('loginBtn');
 
+        console.log('👤 Username:', username);
+
         errorDiv.classList.add('hidden');
         loginBtn.disabled = true;
         loginBtn.textContent = 'Signing in...';
 
         try {
+            console.log('🌐 Calling API...');
             const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -255,27 +250,28 @@
 
             const data = await response.json();
 
-            console.log('Login response:', data); // DEBUG
-            console.log('mustChangePassword:', data.mustChangePassword); // DEBUG
+            console.log('✅ Login response:', data);
+            console.log('🔒 mustChangePassword:', data.mustChangePassword);
 
             if (data.success) {
-                // Store data and redirect
                 sessionStorage.setItem('username', username);
                 sessionStorage.setItem('studentData', JSON.stringify(data.studentData));
 
                 if (data.mustChangePassword === true) {
-                    console.log('Redirecting to change password'); // DEBUG
+                    console.log('🔄 Redirecting to change password');
                     sessionStorage.setItem('tempPassword', password);
                     window.location.href = 'change-password.html';
                 } else {
-                    console.log('Redirecting to dashboard'); // DEBUG
+                    console.log('🎯 Redirecting to dashboard');
                     window.location.href = 'dashboard.html';
                 }
             } else {
+                console.log('❌ Login failed:', data.message);
                 errorDiv.textContent = data.message || 'Login failed';
                 errorDiv.classList.remove('hidden');
             }
         } catch (error) {
+            console.error('💥 Network error:', error);
             errorDiv.textContent = 'Network error. Please try again.';
             errorDiv.classList.remove('hidden');
         } finally {
