@@ -129,6 +129,16 @@ object DatabaseConnection {
 
             println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex(":[^:@]+@"), ":****@")}")
 
+            // Test basic connection first
+            try {
+                println("🔍 Testing basic JDBC driver load...")
+                Class.forName("org.postgresql.Driver")
+                println("✅ PostgreSQL driver loaded successfully")
+            } catch (e: Exception) {
+                println("❌ Failed to load PostgreSQL driver: ${e.message}")
+                throw e
+            }
+
             val config = HikariConfig().apply {
                 this.jdbcUrl = jdbcUrl
                 maximumPoolSize = 3
@@ -168,6 +178,11 @@ object DatabaseConnection {
             println("✅ Database connected successfully!")
         } catch (e: Exception) {
             println("❌ Database connection failed: ${e.message}")
+            println("❌ Exception type: ${e.javaClass.name}")
+            if (e.cause != null) {
+                println("❌ Cause: ${e.cause?.message}")
+                println("❌ Cause type: ${e.cause?.javaClass?.name}")
+            }
             e.printStackTrace()
             println("⚠️  Falling back to file storage")
             dataSource = null
