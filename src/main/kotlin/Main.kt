@@ -103,8 +103,22 @@ object DatabaseConnection {
 
         try {
             println("🔌 Connecting to database...")
+
+            // Fix: Ensure the URL has the jdbc:postgresql:// prefix
+            val jdbcUrl = if (databaseUrl.startsWith("jdbc:")) {
+                databaseUrl
+            } else if (databaseUrl.startsWith("postgresql://")) {
+                "jdbc:$databaseUrl"
+            } else if (databaseUrl.startsWith("postgres://")) {
+                databaseUrl.replace("postgres://", "jdbc:postgresql://")
+            } else {
+                "jdbc:postgresql://$databaseUrl"
+            }
+
+            println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex(":[^:@]+@"), ":****@")}")
+
             val config = HikariConfig().apply {
-                jdbcUrl = databaseUrl
+                this.jdbcUrl = jdbcUrl + "?sslmode=require"
                 maximumPoolSize = 3
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_REPEATABLE_READ"
@@ -128,6 +142,7 @@ object DatabaseConnection {
             println("✅ Database connected successfully!")
         } catch (e: Exception) {
             println("❌ Database connection failed: ${e.message}")
+            e.printStackTrace()
             println("⚠️  Falling back to file storage")
             dataSource = null
         }
