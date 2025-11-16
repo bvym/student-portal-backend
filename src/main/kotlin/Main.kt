@@ -376,7 +376,7 @@ fun main() {
 
         routing {
             get("/") {
-                call.respondText("Student Portal API is running! ✅")
+                call.respondText("Student Portal API is running! ✅ v2.0")
             }
 
             post("/api/login") {
