@@ -103,9 +103,10 @@ object DatabaseConnection {
 
         try {
             println("🔌 Connecting to database...")
+            println("📝 Raw DATABASE_URL format: ${databaseUrl.substringBefore("://")}")
 
             // Fix: Ensure the URL has the jdbc:postgresql:// prefix
-            val jdbcUrl = if (databaseUrl.startsWith("jdbc:")) {
+            var jdbcUrl = if (databaseUrl.startsWith("jdbc:")) {
                 databaseUrl
             } else if (databaseUrl.startsWith("postgresql://")) {
                 "jdbc:$databaseUrl"
@@ -115,13 +116,29 @@ object DatabaseConnection {
                 "jdbc:postgresql://$databaseUrl"
             }
 
+            // Add SSL and connection parameters if not present
+            if (!jdbcUrl.contains("?")) {
+                jdbcUrl += "?sslmode=require&ssl=true"
+            } else if (!jdbcUrl.contains("sslmode")) {
+                jdbcUrl += "&sslmode=require&ssl=true"
+            }
+
             println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex(":[^:@]+@"), ":****@")}")
 
             val config = HikariConfig().apply {
-                this.jdbcUrl = jdbcUrl + "?sslmode=require"
+                this.jdbcUrl = jdbcUrl
                 maximumPoolSize = 3
+                minimumIdle = 1
+                connectionTimeout = 30000
+                idleTimeout = 600000
+                maxLifetime = 1800000
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+
+                // Add these properties for better Supabase compatibility
+                addDataSourceProperty("socketTimeout", "30")
+                addDataSourceProperty("loginTimeout", "30")
+
                 validate()
             }
 
