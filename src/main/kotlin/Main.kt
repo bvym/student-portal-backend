@@ -105,29 +105,45 @@ object DatabaseConnection {
             println("🔌 Connecting to database...")
             println("📝 Raw DATABASE_URL format: ${databaseUrl.substringBefore("://")}")
 
-            // Fix: Ensure the URL has the jdbc:postgresql:// prefix
-            var jdbcUrl = if (databaseUrl.startsWith("jdbc:")) {
-                databaseUrl
-            } else if (databaseUrl.startsWith("postgresql://")) {
-                "jdbc:$databaseUrl"
-            } else if (databaseUrl.startsWith("postgres://")) {
-                databaseUrl.replace("postgres://", "jdbc:postgresql://")
-            } else {
-                "jdbc:postgresql://$databaseUrl"
+            // Parse the PostgreSQL URL properly
+            var jdbcUrl = when {
+                databaseUrl.startsWith("jdbc:postgresql://") -> databaseUrl
+                databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://") -> {
+                    // Parse: postgresql://user:pass@host:port/db
+                    val cleaned = databaseUrl.removePrefix("postgresql://").removePrefix("postgres://")
+                    val (credentials, rest) = if (cleaned.contains("@")) {
+                        val parts = cleaned.split("@", limit = 2)
+                        parts[0] to parts[1]
+                    } else {
+                        "" to cleaned
+                    }
+
+                    val (user, pass) = if (credentials.contains(":")) {
+                        val parts = credentials.split(":", limit = 2)
+                        parts[0] to parts[1]
+                    } else {
+                        credentials to ""
+                    }
+
+                    // Build JDBC URL
+                    val baseUrl = "jdbc:postgresql://$rest"
+                    val urlWithParams = if (baseUrl.contains("?")) {
+                        "$baseUrl&sslmode=require"
+                    } else {
+                        "$baseUrl?sslmode=require"
+                    }
+
+                    // Return URL with user/pass as query params
+                    if (user.isNotEmpty() && pass.isNotEmpty()) {
+                        "$urlWithParams&user=$user&password=$pass"
+                    } else {
+                        urlWithParams
+                    }
+                }
+                else -> "jdbc:postgresql://$databaseUrl?sslmode=require"
             }
 
-            // Add SSL and connection parameters if not present
-            // Use sslmode=require but don't verify the certificate (common for Supabase)
-            if (!jdbcUrl.contains("?")) {
-                jdbcUrl += "?sslmode=require"
-            } else if (!jdbcUrl.contains("sslmode")) {
-                jdbcUrl += "&sslmode=require"
-            }
-
-            // Remove any existing ssl=true parameter and add proper SSL settings
-            jdbcUrl = jdbcUrl.replace("&ssl=true", "").replace("?ssl=true&", "?")
-
-            println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex(":[^:@]+@"), ":****@")}")
+            println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex("password=[^&]+"), "password=****").replace(Regex(":[^:@]+@"), ":****@")}")
 
             // Test basic connection first
             try {
@@ -332,8 +348,13 @@ fun getAccessToken(): String {
 }
 
 fun main() {
+    println("🚀 Starting Student Portal API...")
+    println("🗄️  Initializing database connection...")
+
     // Initialize database (with file storage fallback)
     DatabaseConnection.init()
+
+    println("🌐 Starting web server...")
 
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         install(ContentNegotiation) {
