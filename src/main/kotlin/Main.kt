@@ -97,8 +97,9 @@ object DatabaseConnection {
         val databaseUrl = System.getenv("DATABASE_URL")
 
         if (databaseUrl == null) {
-            println("⚠️  No DATABASE_URL found - using file storage (passwords will reset on redeploy)")
-            return
+            println("❌ ERROR: No DATABASE_URL found!")
+            println("❌ Database is required. Please set DATABASE_URL environment variable.")
+            throw IllegalStateException("DATABASE_URL environment variable is required")
         }
 
         try {
@@ -200,8 +201,8 @@ object DatabaseConnection {
                 println("❌ Cause type: ${e.cause?.javaClass?.name}")
             }
             e.printStackTrace()
-            println("⚠️  Falling back to file storage")
-            dataSource = null
+            println("❌ FATAL: Database connection required. Application cannot start.")
+            throw IllegalStateException("Failed to connect to database", e)
         }
     }
 
