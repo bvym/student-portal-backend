@@ -23,13 +23,13 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.Connection
 
+// Data classes
 @Serializable
 data class ChangePasswordResponse(
     val success: Boolean,
     val message: String
 )
 
-// Data classes
 @Serializable
 data class LoginRequest(
     val username: String,
@@ -82,7 +82,6 @@ data class UsersDatabase(
     val users: MutableMap<String, UserAccount> = mutableMapOf()
 )
 
-// Google Sheets API Response
 @Serializable
 data class SheetsResponse(
     val range: String? = null,
@@ -90,48 +89,169 @@ data class SheetsResponse(
     val values: List<List<String>>? = null
 )
 
-// File storage for changed passwords
-class UserStorage {
+// Database connection pool with fallback to file storage
+object DatabaseConnection {
+    private var dataSource: HikariDataSource? = null
+
+    fun init() {
+        val databaseUrl = System.getenv("DATABASE_URL")
+
+        if (databaseUrl == null) {
+            println("⚠️  No DATABASE_URL found - using file storage (passwords will reset on redeploy)")
+            return
+        }
+
+        try {
+            println("🔌 Connecting to database...")
+            val config = HikariConfig().apply {
+                jdbcUrl = databaseUrl
+                maximumPoolSize = 3
+                isAutoCommit = false
+                transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+                validate()
+            }
+
+            dataSource = HikariDataSource(config)
+
+            // Create table if not exists
+            getConnection().use { conn ->
+                conn.createStatement().execute("""
+                    CREATE TABLE IF NOT EXISTS user_passwords (
+                        username VARCHAR(255) PRIMARY KEY,
+                        password_hash TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                conn.commit()
+            }
+            println("✅ Database connected successfully!")
+        } catch (e: Exception) {
+            println("❌ Database connection failed: ${e.message}")
+            println("⚠️  Falling back to file storage")
+            dataSource = null
+        }
+    }
+
+    fun getConnection(): Connection {
+        return dataSource?.connection ?: throw IllegalStateException("Database not available")
+    }
+
+    fun isAvailable(): Boolean = dataSource != null
+}
+
+// Storage for passwords - supports both database and file
+class PasswordStorage {
     private val file = File("users.json")
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
-    fun load(): UsersDatabase {
+    private fun loadFromFile(): UsersDatabase {
         return if (file.exists()) {
-            json.decodeFromString(file.readText())
+            try {
+                json.decodeFromString(file.readText())
+            } catch (e: Exception) {
+                UsersDatabase()
+            }
         } else {
             UsersDatabase()
         }
     }
 
-    fun save(db: UsersDatabase) {
+    private fun saveToFile(db: UsersDatabase) {
         file.writeText(json.encodeToString(db))
     }
 
     fun hasChangedPassword(username: String): Boolean {
-        return load().users.containsKey(username.lowercase())
+        return if (DatabaseConnection.isAvailable()) {
+            try {
+                DatabaseConnection.getConnection().use { conn ->
+                    val stmt = conn.prepareStatement("SELECT 1 FROM user_passwords WHERE username = ?")
+                    stmt.setString(1, username.lowercase())
+                    val rs = stmt.executeQuery()
+                    rs.next()
+                }
+            } catch (e: Exception) {
+                false
+            }
+        } else {
+            loadFromFile().users.containsKey(username.lowercase())
+        }
     }
 
     fun getUser(username: String): UserAccount? {
-        return load().users[username.lowercase()]
+        return if (DatabaseConnection.isAvailable()) {
+            try {
+                DatabaseConnection.getConnection().use { conn ->
+                    val stmt = conn.prepareStatement("SELECT password_hash FROM user_passwords WHERE username = ?")
+                    stmt.setString(1, username.lowercase())
+                    val rs = stmt.executeQuery()
+
+                    if (rs.next()) {
+                        UserAccount(
+                            username = username.lowercase(),
+                            passwordHash = rs.getString("password_hash")
+                        )
+                    } else null
+                }
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            loadFromFile().users[username.lowercase()]
+        }
     }
 
     fun saveNewPassword(username: String, newPassword: String) {
-        val db = load()
-        db.users[username.lowercase()] = UserAccount(
-            username = username.lowercase(),
-            passwordHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
-        )
-        save(db)
+        val hash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
+
+        if (DatabaseConnection.isAvailable()) {
+            try {
+                DatabaseConnection.getConnection().use { conn ->
+                    val stmt = conn.prepareStatement("""
+                        INSERT INTO user_passwords (username, password_hash, updated_at) 
+                        VALUES (?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT (username) 
+                        DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = CURRENT_TIMESTAMP
+                    """)
+                    stmt.setString(1, username.lowercase())
+                    stmt.setString(2, hash)
+                    stmt.executeUpdate()
+                    conn.commit()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            val db = loadFromFile()
+            db.users[username.lowercase()] = UserAccount(
+                username = username.lowercase(),
+                passwordHash = hash
+            )
+            saveToFile(db)
+        }
     }
 
     fun removeUser(username: String) {
-        val db = load()
-        db.users.remove(username.lowercase())
-        save(db)
+        if (DatabaseConnection.isAvailable()) {
+            try {
+                DatabaseConnection.getConnection().use { conn ->
+                    val stmt = conn.prepareStatement("DELETE FROM user_passwords WHERE username = ?")
+                    stmt.setString(1, username.lowercase())
+                    stmt.executeUpdate()
+                    conn.commit()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            val db = loadFromFile()
+            db.users.remove(username.lowercase())
+            saveToFile(db)
+        }
     }
 }
 
-val userStorage = UserStorage()
+val passwordStorage = PasswordStorage()
 
 // HTTP client for Google Sheets API
 val httpClient = HttpClient(CIO) {
@@ -140,9 +260,7 @@ val httpClient = HttpClient(CIO) {
     }
 }
 
-// Get OAuth token from service account
 fun getAccessToken(): String {
-    // Try Render's secret file location first, then local file
     val credentialsPath = if (File("/etc/secrets/points-portal-478302-cd5cd63d4fc1.json").exists()) {
         "/etc/secrets/points-portal-478302-cd5cd63d4fc1.json"
     } else {
@@ -156,9 +274,10 @@ fun getAccessToken(): String {
     credentials.refreshIfExpired()
     return credentials.accessToken.tokenValue
 }
+
 fun main() {
-    // Initialize database connection
-    Database.init()
+    // Initialize database (with file storage fallback)
+    DatabaseConnection.init()
 
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         install(ContentNegotiation) {
@@ -169,14 +288,13 @@ fun main() {
             })
         }
 
-        // CORS for frontend
         install(CORS) {
             anyHost()
             allowHeader(HttpHeaders.ContentType)
-            allowHeader("X-Admin-Key")  // Allow custom admin header
+            allowHeader("X-Admin-Key")
             allowMethod(HttpMethod.Post)
             allowMethod(HttpMethod.Get)
-            allowMethod(HttpMethod.Options)  // Allow preflight requests
+            allowMethod(HttpMethod.Options)
         }
 
         routing {
@@ -188,12 +306,10 @@ fun main() {
                 val request = call.receive<LoginRequest>()
                 val username = request.username.lowercase().trim()
 
-                // Check if user has already changed their password
-                val hasChanged = userStorage.hasChangedPassword(username)
+                val hasChanged = passwordStorage.hasChangedPassword(username)
 
                 if (hasChanged) {
-                    // User has changed password - check against users.json
-                    val user = userStorage.getUser(username)
+                    val user = passwordStorage.getUser(username)
 
                     if (user == null || !BCrypt.checkpw(request.password, user.passwordHash)) {
                         call.respond(HttpStatusCode.Unauthorized, LoginResponse(
@@ -203,7 +319,6 @@ fun main() {
                         return@post
                     }
 
-                    // Password correct, fetch their data
                     val studentData = getStudentDataFromSheets(username)
 
                     if (studentData == null) {
@@ -221,7 +336,6 @@ fun main() {
                     ))
 
                 } else {
-                    // First time login - check temp password from Google Sheet
                     val sheetData = getStudentRowFromSheets(username)
 
                     if (sheetData == null) {
@@ -242,7 +356,6 @@ fun main() {
                         return@post
                     }
 
-                    // Temp password correct - force them to change it
                     val studentData = sheetData["data"] as? StudentData
 
                     call.respond(HttpStatusCode.OK, LoginResponse(
@@ -257,7 +370,6 @@ fun main() {
                 val request = call.receive<ChangePasswordRequest>()
                 val username = request.username.lowercase().trim()
 
-                // Validate new password
                 if (request.newPassword.length < 6) {
                     call.respond(HttpStatusCode.BadRequest, ChangePasswordResponse(
                         success = false,
@@ -266,15 +378,12 @@ fun main() {
                     return@post
                 }
 
-                // Verify old password first
-                val hasChanged = userStorage.hasChangedPassword(username)
+                val hasChanged = passwordStorage.hasChangedPassword(username)
 
                 val oldPasswordValid = if (hasChanged) {
-                    // Check against stored hash
-                    val user = userStorage.getUser(username)
+                    val user = passwordStorage.getUser(username)
                     user != null && BCrypt.checkpw(request.oldPassword, user.passwordHash)
                 } else {
-                    // Check against temp password in sheet
                     val sheetData = getStudentRowFromSheets(username)
                     val tempPassword = sheetData?.get("tempPassword") ?: ""
                     request.oldPassword == tempPassword
@@ -288,8 +397,7 @@ fun main() {
                     return@post
                 }
 
-                // Save new password
-                userStorage.saveNewPassword(username, request.newPassword)
+                passwordStorage.saveNewPassword(username, request.newPassword)
 
                 call.respond(HttpStatusCode.OK, ChangePasswordResponse(
                     success = true,
@@ -297,7 +405,6 @@ fun main() {
                 ))
             }
 
-            // ADMIN: Reset a student's password (revert to temp password)
             post("/api/admin/reset-password") {
                 val adminKey = call.request.headers["X-Admin-Key"]
                 val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
@@ -316,8 +423,7 @@ fun main() {
                 val request = call.receive<ResetRequest>()
                 val username = request.username.lowercase().trim()
 
-                // Remove from users.json - they'll use temp password again
-                userStorage.removeUser(username)
+                passwordStorage.removeUser(username)
 
                 call.respond(HttpStatusCode.OK, ChangePasswordResponse(
                     success = true,
@@ -325,7 +431,6 @@ fun main() {
                 ))
             }
 
-            // ADMIN: List all students
             get("/api/admin/list-students") {
                 val adminKey = call.request.headers["X-Admin-Key"]
                 val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
@@ -335,12 +440,10 @@ fun main() {
                     return@get
                 }
 
-                // Fetch all students from Google Sheets
                 val allStudents = getAllStudentsFromSheets()
                 call.respond(HttpStatusCode.OK, mapOf("students" to allStudents))
             }
 
-            // ADMIN: View any student's data
             post("/api/admin/view-student") {
                 val adminKey = call.request.headers["X-Admin-Key"]
                 val correctKey = System.getenv("ADMIN_KEY") ?: "change-this-secret-key"
@@ -376,18 +479,16 @@ fun main() {
     }.start(wait = true)
 }
 
-// Get student data from Google Sheets using REST API
 suspend fun getStudentDataFromSheets(username: String): StudentData? {
     val row = getStudentRowFromSheets(username)
     return row?.get("data") as? StudentData
 }
 
-// Get all students (for admin dropdown)
 suspend fun getAllStudentsFromSheets(): List<Map<String, String>> {
     try {
         val token = getAccessToken()
         val spreadsheetId = "15TB4GGs4y_8-_nkKvAJTs_s1lAmSpHjodYnnuiDrVhs"
-        val range = "'Semester 1'!A:B"  // Just names and usernames
+        val range = "'Semester 1'!A:B"
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/${range.replace(" ", "%20")}"
 
@@ -398,7 +499,6 @@ suspend fun getAllStudentsFromSheets(): List<Map<String, String>> {
         val sheetsResponse = Json.decodeFromString<SheetsResponse>(response.bodyAsText())
         val values = sheetsResponse.values ?: return emptyList()
 
-        // Skip header row, return all students
         return values.drop(1).mapNotNull { row ->
             if (row.size >= 2) {
                 mapOf(
@@ -413,13 +513,12 @@ suspend fun getAllStudentsFromSheets(): List<Map<String, String>> {
     }
 }
 
-// Get full student row including temp password via HTTP
 suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
     try {
         println("DEBUG: Looking for username: $username")
         val token = getAccessToken()
         val spreadsheetId = "15TB4GGs4y_8-_nkKvAJTs_s1lAmSpHjodYnnuiDrVhs"
-        val range = "'Semester 1'!A:Q"  // Quote the sheet name
+        val range = "'Semester 1'!A:Q"
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/${range.replace(" ", "%20")}"
 
@@ -430,7 +529,7 @@ suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
 
         val responseText = response.bodyAsText()
         println("DEBUG: Response status: ${response.status}")
-        println("DEBUG: Response body: ${responseText.take(500)}") // First 500 chars
+        println("DEBUG: Response body: ${responseText.take(500)}")
 
         val sheetsResponse = Json.decodeFromString<SheetsResponse>(responseText)
         val values = sheetsResponse.values
@@ -442,7 +541,6 @@ suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
 
         println("DEBUG: Found ${values.size} rows in sheet")
 
-        // Find row with matching username (column B, index 1)
         for (i in 1 until values.size) {
             val row = values[i]
             if (row.size >= 2) {
@@ -472,7 +570,6 @@ suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
                         percentOutOf90 = row.getOrNull(15) ?: "0%"
                     )
 
-                    // Column Q (index 16) is the temp password
                     val tempPassword = row.getOrNull(16) ?: ""
                     println("DEBUG: Temp password from sheet: '$tempPassword'")
 
