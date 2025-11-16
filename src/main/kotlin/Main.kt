@@ -117,11 +117,15 @@ object DatabaseConnection {
             }
 
             // Add SSL and connection parameters if not present
+            // Use sslmode=require but don't verify the certificate (common for Supabase)
             if (!jdbcUrl.contains("?")) {
-                jdbcUrl += "?sslmode=require&ssl=true"
+                jdbcUrl += "?sslmode=require"
             } else if (!jdbcUrl.contains("sslmode")) {
-                jdbcUrl += "&sslmode=require&ssl=true"
+                jdbcUrl += "&sslmode=require"
             }
+
+            // Remove any existing ssl=true parameter and add proper SSL settings
+            jdbcUrl = jdbcUrl.replace("&ssl=true", "").replace("?ssl=true&", "?")
 
             println("📝 Using JDBC URL: ${jdbcUrl.replace(Regex(":[^:@]+@"), ":****@")}")
 
@@ -135,9 +139,14 @@ object DatabaseConnection {
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_REPEATABLE_READ"
 
-                // Add these properties for better Supabase compatibility
+                // SSL properties for Supabase
+                addDataSourceProperty("ssl", "true")
+                addDataSourceProperty("sslmode", "require")
+
+                // Connection timeouts
                 addDataSourceProperty("socketTimeout", "30")
                 addDataSourceProperty("loginTimeout", "30")
+                addDataSourceProperty("connectTimeout", "30")
 
                 validate()
             }
