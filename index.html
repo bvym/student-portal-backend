@@ -229,10 +229,13 @@
 </footer>
 
 <script>
+    console.log('SCRIPT VERSION 2.0 LOADED'); // Version tracking
     const API_URL = 'https://points-tracker-wpy6.onrender.com';
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        console.log('LOGIN FORM SUBMITTED!'); // DEBUG
 
         const username = document.getElementById('username').value.trim().toLowerCase();
         const password = document.getElementById('password').value;
