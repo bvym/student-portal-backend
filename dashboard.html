@@ -196,7 +196,7 @@
 <div class="dashboard-content">
     <div class="welcome-banner">
         <h2>Welcome, <span id="userName">Student</span>!</h2>
-        <p>Here's your activity summary for Semester 1</p>
+        <p>Here's your activity summary for Semester 2</p>
     </div>
 
     <div class="summary-cards">
@@ -237,21 +237,23 @@
 
     document.getElementById("userName").textContent = studentData.name;
     document.getElementById("totalPoints").textContent = studentData.totalPoints || '0';
-    document.getElementById("completion").textContent = studentData.percentOutOf90 || '0%';
+    document.getElementById("completion").textContent = studentData.percentOutOf50 || '0%';
 
     const activities = [
-        { name: 'Cookie Decorating', value: studentData.cookieDecorating, unit: 'hrs' },
-        { name: 'Haunted Basement', value: studentData.hauntedBasement, unit: 'hrs' },
-        { name: 'Club Fair', value: studentData.clubFair, unit: 'hrs' },
-        { name: 'Open House', value: studentData.openHouse, unit: 'hrs' },
-        { name: 'Mental Health Oct 8', value: studentData.mentalHealthOct8, unit: '' },
-        { name: 'Mental Health Nov 14', value: studentData.mentalHealthNov14, unit: '' },
-        { name: 'Fall Play', value: studentData.fallPlay, unit: 'hrs' },
-        { name: 'Spirit Week', value: studentData.spiritWeek, unit: 'days' },
-        { name: 'Sept COSA', value: studentData.septCosa, unit: '' },
-        { name: 'Oct COSA', value: studentData.octCosa, unit: '' },
-        { name: 'Nov COSA', value: studentData.novCosa, unit: '' },
-        { name: 'Dec COSA', value: studentData.decCosa, unit: '' },
+        { name: 'Major Wars', value: studentData.majorWars, unit: 'periods' },
+        { name: 'Cosplay Con', value: studentData.cosplayCon, unit: 'shifts' },
+        { name: 'Flowers for Favorites', value: studentData.flowersForFavorites, unit: 'periods' },
+        { name: 'Induction', value: studentData.induction, unit: 'shifts' },
+        { name: 'Wellness Event Feb 11th', value: studentData.wellnessEventFeb11, unit: '' },
+        { name: 'Wellness Event April', value: studentData.wellnessEventApril, unit: '' },
+        { name: 'Graduation', value: studentData.graduation, unit: 'shifts' },
+        { name: 'Agendas and Minutes', value: studentData.agendasAndMinutes, unit: 'points' },
+        { name: 'Jan COSA', value: studentData.janCosa, unit: '' },
+        { name: 'Feb COSA', value: studentData.febCosa, unit: '' },
+        { name: 'Mar COSA', value: studentData.marCosa, unit: '' },
+        { name: 'Apr COSA', value: studentData.aprCosa, unit: '' },
+        { name: 'May COSA', value: studentData.mayCosa, unit: '' },
+        { name: 'Jun COSA', value: studentData.junCosa, unit: '' },
     ];
 
     const tableBody = document.getElementById('activitiesTable');

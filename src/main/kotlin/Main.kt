@@ -55,20 +55,22 @@ data class LoginResponse(
 data class StudentData(
     val name: String,
     val username: String,
-    val cookieDecorating: String,
-    val hauntedBasement: String,
-    val clubFair: String,
-    val openHouse: String,
-    val mentalHealthOct8: String,
-    val mentalHealthNov14: String,
-    val fallPlay: String,
-    val spiritWeek: String,
-    val septCosa: String,
-    val octCosa: String,
-    val novCosa: String,
-    val decCosa: String,
+    val majorWars: String,
+    val cosplayCon: String,
+    val flowersForFavorites: String,
+    val induction: String,
+    val wellnessEventFeb11: String,
+    val wellnessEventApril: String,
+    val graduation: String,
+    val agendasAndMinutes: String,
+    val janCosa: String,
+    val febCosa: String,
+    val marCosa: String,
+    val aprCosa: String,
+    val mayCosa: String,
+    val junCosa: String,
     val totalPoints: String,
-    val percentOutOf90: String
+    val percentOutOf50: String
 )
 
 @Serializable
@@ -566,7 +568,7 @@ suspend fun getAllStudentsFromSheets(): List<Map<String, String>> {
     try {
         val token = getAccessToken()
         val spreadsheetId = "15TB4GGs4y_8-_nkKvAJTs_s1lAmSpHjodYnnuiDrVhs"
-        val range = "'Semester 1'!A:B"
+        val range = "'Semester 2'!A:B"
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/${range.replace(" ", "%20")}"
 
@@ -596,7 +598,7 @@ suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
         println("DEBUG: Looking for username: $username")
         val token = getAccessToken()
         val spreadsheetId = "15TB4GGs4y_8-_nkKvAJTs_s1lAmSpHjodYnnuiDrVhs"
-        val range = "'Semester 1'!A:Q"
+        val range = "'Semester 2'!A:S"
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/${range.replace(" ", "%20")}"
 
@@ -632,23 +634,25 @@ suspend fun getStudentRowFromSheets(username: String): Map<String, Any>? {
                     val studentData = StudentData(
                         name = row.getOrNull(0) ?: "",
                         username = row.getOrNull(1) ?: "",
-                        cookieDecorating = row.getOrNull(2) ?: "0",
-                        hauntedBasement = row.getOrNull(3) ?: "0",
-                        clubFair = row.getOrNull(4) ?: "0",
-                        openHouse = row.getOrNull(5) ?: "0",
-                        mentalHealthOct8 = row.getOrNull(6) ?: "",
-                        mentalHealthNov14 = row.getOrNull(7) ?: "",
-                        fallPlay = row.getOrNull(8) ?: "0",
-                        spiritWeek = row.getOrNull(9) ?: "0",
-                        septCosa = row.getOrNull(10) ?: "",
-                        octCosa = row.getOrNull(11) ?: "",
-                        novCosa = row.getOrNull(12) ?: "",
-                        decCosa = row.getOrNull(13) ?: "",
-                        totalPoints = row.getOrNull(14) ?: "0",
-                        percentOutOf90 = row.getOrNull(15) ?: "0%"
+                        majorWars = row.getOrNull(2) ?: "0",
+                        cosplayCon = row.getOrNull(3) ?: "0",
+                        flowersForFavorites = row.getOrNull(4) ?: "0",
+                        induction = row.getOrNull(5) ?: "0",
+                        wellnessEventFeb11 = row.getOrNull(6) ?: "",
+                        wellnessEventApril = row.getOrNull(7) ?: "",
+                        graduation = row.getOrNull(8) ?: "0",
+                        agendasAndMinutes = row.getOrNull(9) ?: "0",
+                        janCosa = row.getOrNull(10) ?: "",
+                        febCosa = row.getOrNull(11) ?: "",
+                        marCosa = row.getOrNull(12) ?: "",
+                        aprCosa = row.getOrNull(13) ?: "",
+                        mayCosa = row.getOrNull(14) ?: "",
+                        junCosa = row.getOrNull(15) ?: "",
+                        totalPoints = row.getOrNull(16) ?: "0",
+                        percentOutOf50 = row.getOrNull(17) ?: "0%"
                     )
 
-                    val tempPassword = row.getOrNull(16) ?: ""
+                    val tempPassword = row.getOrNull(18) ?: ""
                     println("DEBUG: Temp password from sheet: '$tempPassword'")
 
                     return mapOf(
